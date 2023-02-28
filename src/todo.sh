@@ -1,6 +1,6 @@
 #!/bin/bash
 
-TODO_PATH=$(find ./ -name todo.csv)
+TODO_PATH=$(find ~/.local/bin/ -name todo.csv)
 
 reset() {
   echo 0,task,status > ${TODO_PATH}
