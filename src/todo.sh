@@ -1,29 +1,22 @@
 #!/bin/bash
 
-TODO_PATH=$(find ~/.scripts/ -name todo.csv)
+TODO_PATH=$(find ./ -name todo.csv)
 
-new_task() {
-  index=($(tail -n 1 $TODO_PATH | awk -F , '{print $1}'))
-  let "index=index+1"
-  echo $index,$OPTARG,todo >> $TODO_PATH
+reset() {
+  echo 0,task,status > ${TODO_PATH}
+  exit 0
 }
 
-mv_inprogress() {
-  sed -i "" "$OPTARG s/todo/inprogress/" $TODO_PATH
-  inprogress
+new_task() {
+  INDEX=($(tail -n 1 $TODO_PATH | awk -F , '{print $1}'))
+  let "INDEX++"
+  echo $INDEX,$OPTARG,todo >> $TODO_PATH
 }
 
 mv_completed() {
-  sed -i "" "$OPTARG s/inprogress/done/" $TODO_PATH
+  let "OPTARG++"
+  sed -i "${OPTARG}s/todo/done/" $TODO_PATH
   completed
-}
-
-inprogress() {
-  echo
-  echo " inprogress "
-  echo  ------------
-  awk -F , ' $3 ~ /inprogress/ {print $1 ") " $2}' $TODO_PATH
-  exit 0
 }
 
 completed() {
@@ -36,8 +29,8 @@ completed() {
 
 todo() {
   echo
-  echo " backlog "
-  echo  ---------
+  echo " inprogress "
+  echo  ------------
   awk -F , ' $3 ~ /todo/ {print $1 ") " $2}' $TODO_PATH
   exit 0
 }
@@ -49,40 +42,37 @@ menu_help() {
   echo -e "   or: ag [argument]"
   echo -e "   or: ag [no flag returns all tasks]\n"
   echo "Arguments:"
-  echo "  -n        create new task and adds to the backlog"
-  echo "  -m        moves todo to inprogress. Requires index"
-  echo "  -d        moves inprogress to done. Requires index"
-  echo "  -b        lists all tasks in backlog"
-  echo "  -i        lists all tasks in inprogress"
-  echo "  -c        lists all tasks in done"
+  echo "  -n        create new task"
+  echo "  -m        moves todo to completed. Requires index"
+  echo "  -l        lists all tasks in inprogress"
+  echo "  -c        lists all tasks in completed"
+  echo "  -r        removes all items form todo list"
   echo "  -h        help menu"
   exit 0
 }
 
 invalid_option() {
-  echo "Invalid option: -$OPTARG"
+  echo "Invalid option: -${OPTARG}"
   exit 1
 }
 
 argument_needed() {
-  echo "Option -$OPTARG requires an argument."
+  echo "Option -${OPTARG} requires an argument."
   exit 1
 }
 
-while getopts ":n:m:d:b?c?i?h?" opt; do
+while getopts ":m:n:l?c?r?h?" opt; do
   case $opt in
     m)
-      mv_inprogress;;
-    d)
       mv_completed;;
     n)
       new_task;;
-    b)
+    l)
       todo;;
     c)
       completed;;
-    i)
-      inprogress;;
+    r)
+      reset;;
     h)
       menu_help;;
     \?)
@@ -92,7 +82,4 @@ while getopts ":n:m:d:b?c?i?h?" opt; do
   esac
 done
 
-echo
-echo ' backlog / inprogress'
-echo  ----------------------
-awk -F , '$3 ~ /todo/ || $3 ~ /inprogress/  {print $1 ") " $2} ' $TODO_PATH
+todo
